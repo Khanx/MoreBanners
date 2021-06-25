@@ -1,0 +1,14 @@
+[
+	{
+		"defaultLimit" : 5,
+		"defaultPriority" : -100,
+		"name" : "Khanx.player.NewBanner",
+		"requires" : [
+			{"amount":4,"type":"ironingot"},
+			{"type":"coppertools"}
+		],
+		"results" : [
+			{"type":"Khanx.NewBanner"}
+		]
+	}
+]

@@ -1,0 +1,15 @@
+{
+  "Khanx.NewBanner" : {
+    "customData" : {
+			"colors" : ["#ff0000->#341a05","#00ff00->#ceac0d","#0000ff->#960909"],
+			"farShadows" : true,
+		},
+		"icon" : "./banner.png",
+		"isSolid" : false,
+		"mesh" : "./banner.ply",
+		"needsBase" : true,
+		"onPlaceAudio" : "woodPlace",
+		"onRemoveAudio" : "woodDeleteLight",
+		"sideall" : "neutral"
+  }
+}

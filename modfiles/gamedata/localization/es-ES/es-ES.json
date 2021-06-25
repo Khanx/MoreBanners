@@ -1,0 +1,10 @@
+{
+	"types":
+	{
+		"Khanx.NewBanner": "Nuevo estandarte"
+	},
+	"typeuses":
+	{
+		"Khanx.NewBanner": "Necesario para colocar más estandartes en una colonia. Aviso: Necesitas 1.000.000 Puntos de Colonia"
+	}
+}

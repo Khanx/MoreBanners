@@ -1,0 +1,33 @@
+[
+	{
+		"name": "MoreBanners",
+		"version": "0.1.0.0",
+		"description" : "The compass is a easy way to know the cardinal direction and to find your colonies.",
+		"enableddefault" : true,
+		"dllpath": "MoreBanners.dll",
+		"compatibleversions":
+			[
+				"0.8.0"
+			],
+		"jsonFiles" : [
+			{
+				"relativePath" : "./gamedata/types.json",
+				"fileType" : "addNewTypes",
+				"index" : -1000000
+			},
+			{
+				"relativePath" : "./gamedata/recipes.json",
+				"fileType" : "addOrReplacePlayerRecipes",
+				"index" : -1000000,
+			},
+			{
+				"fileType": "addOrOverrideLocalization",
+				"relativePath": "gamedata/localization/en-US/en-US.json"
+			},
+			{
+				"fileType": "addOrOverrideLocalization",
+				"relativePath": "gamedata/localization/es-ES/es-ES.json"
+			}
+		]
+	}
+]

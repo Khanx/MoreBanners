@@ -1,0 +1,10 @@
+{
+	"types":
+	{
+		"Khanx.NewBanner": "New Banner"
+	},
+	"typeuses":
+	{
+		"Khanx.NewBanner": "Required to place more banners in the same colony. Warning: You need 1.000.000 Colony Points"
+	}
+}

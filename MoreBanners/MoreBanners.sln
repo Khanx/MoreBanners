@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31410.357
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MoreBanners", "MoreBanners\MoreBanners.csproj", "{99130B52-C41E-46DB-8646-767C5932AADE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{99130B52-C41E-46DB-8646-767C5932AADE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{99130B52-C41E-46DB-8646-767C5932AADE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{99130B52-C41E-46DB-8646-767C5932AADE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{99130B52-C41E-46DB-8646-767C5932AADE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {26C3D1A4-7012-455B-A3A7-DDFF268C0107}
+	EndGlobalSection
+EndGlobal
