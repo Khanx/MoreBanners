@@ -46,7 +46,7 @@ namespace MoreBanners
                 }
 
                 //Constrain 2: 1.000.000 Colony Points
-                if (!colony.TryTakePoints(10)) //11000000
+                if (!colony.TryTakePoints(10000000))
                 {
                     Chatting.Chat.Send(player, "<color=red>You need 1.000.000 Colony Points to place a new banner.</color>");
 
@@ -56,120 +56,147 @@ namespace MoreBanners
 
                 data.TypeNew = BuiltinBlocks.Types.banner;
                 data.RequestOrigin = new BlockChangeRequestOrigin(player, colony.ColonyID);
+                data.InventoryItemResults.Add(new InventoryItem());
             }
 
             //Moving banner
             if (data.TypeNew.ItemIndex == BuiltinBlocks.Indices.banner)
             {
-                Chatting.Chat.SendToConnected(data.CallbackOrigin.ToString());
-                //Player is placing a NEW colony not a NEW banner to a existing colony
-                if (player.ActiveColony == null || player.ActiveColony.Banners.Length == 1)
+                //Player is placing a NEW colony or the colony only has one banner
+                if (player.ActiveColony == null || player.ActiveColony.Banners.Length == 1 || data.InventoryItemResults.Count == 1)
                 {
                     return;
                 }
 
                 Colony colony = player.ActiveColony;
 
-                //Constrain: Distance to closer banner must be < X
-                bool minDistance = false;
-                var closestBanner = colony.GetClosestBanner(data.Position);
+                var moveBanner = colony.GetClosestBanner(data.Position);
 
-                foreach (var banner in colony.Banners)
+                //Moving the banner will result in a isolatedBanner
+                if(!CanRemove(moveBanner, colony))
                 {
-                    if (closestBanner != banner &&  ConnectedSafeArea(banner.Position, data.Position))
-                        minDistance = true;
-                }
-
-                if (!minDistance)
-                {
-                    Chatting.Chat.Send(player, "<color=red>The safe area of the new banner must be connected with your colony.</color>");
+                    Chatting.Chat.Send(player, "<color=red>The banner cannot be moved to the new position because it would result in a discontinuous safe zone.</ color>");
 
                     BlockCallback(data);
                     return;
                 }
+
+                //The new position to place the banner must be connected with the safe area
+                bool minDistance = false;
+                foreach (var banner in colony.Banners)
+                {
+                    if(banner != moveBanner)
+                        if (ConnectedSafeArea(banner.Position, data.Position))
+                            minDistance = true;
+                }
+
+                if (!minDistance)
+                {
+                    Chatting.Chat.Send(player, "<color=red>The banner cannot be moved to the new position because it would result in another banner disconnected from the safe zone.</ color>");
+
+                    BlockCallback(data);
+                    return;
+                }
+
+                data.InventoryItemResults.Add(new InventoryItem());
             }
 
             //Removing banner
             if (data.TypeOld.ItemIndex == BuiltinBlocks.Indices.banner && data.TypeNew.ItemIndex == BuiltinBlocks.Indices.air)
             {
+                //Moving the banner has already checked this conditions
+                if(data.InventoryItemResults.Count == 1)
+                {
+                    return;
+                }
+
                 BlockEntities.Implementations.BannerTracker.Banner removedBanner = null;
                 //If It is not possible to identify the banner then ignore
                 if (!ServerManager.BlockEntityTracker.BannerTracker.TryGetClosest(data.Position, out removedBanner) || removedBanner == null)
                     return;
 
-                //If the colony only has one or two banners then ignore
+                //If the colony only has less than 2 banners there is no problem
                 if (removedBanner.Colony.Banners.Length < 3)
                     return;
 
-                //Check if it is possible to arrive from Source to Destination without the removed banner
-                int[] bannerGroups = new int[removedBanner.Colony.Banners.Length];
-                int groups = 0;
-
-                for(int i=0;i < removedBanner.Colony.Banners.Length;i++)
+                if(!CanRemove(removedBanner, removedBanner.Colony))
                 {
-                    for(int j = 0; j < removedBanner.Colony.Banners.Length;j++)
-                    {
-                        var source = removedBanner.Colony.Banners[i];
-                        var destination = removedBanner.Colony.Banners[j];
+                    Chatting.Chat.Send(player, "<color=red>The banner cannot be removed because it would result in another banner disconnected from the safe zone.</color>");
 
-                        if (source == destination || source == removedBanner || destination == removedBanner)
-                            continue;
-
-                        if(ConnectedSafeArea(source.Position,destination.Position))
-                        {
-                            if(bannerGroups[i] == 0 && bannerGroups[j] == 0)
-                            {
-                                groups++;
-                                bannerGroups[i] = groups;
-                                bannerGroups[j] = groups;
-                            }
-                            else if(bannerGroups[i] != 0 && bannerGroups[j] == 0)
-                            {
-                                bannerGroups[j] = bannerGroups[i];
-                            }
-                            else if (bannerGroups[j] != 0 && bannerGroups[i] == 0)
-                            {
-                                bannerGroups[i] = bannerGroups[j];
-                            }
-                            else
-                            {
-                                for (int k = 0; k < removedBanner.Colony.Banners.Length; k++)
-                                {
-                                    if (bannerGroups[k] == bannerGroups[i])
-                                        bannerGroups[k] = bannerGroups[j];
-                                }
-                            }
-                        }
-                    }
-                }
-
-                int group = 0;
-                for (int i = 0; i < removedBanner.Colony.Banners.Length; i++)
-                {
-                    if (bannerGroups[i] == 0)
-                    {
-                        if (removedBanner.Colony.Banners[i] != removedBanner)
-                        {
-                            Chatting.Chat.Send(player, "<color=red>The safe area of the new banner must be connected with your colony.</color>");
-
-                            BlockCallback(data);
-                            return;
-                        }
-                    }
-                    else if (group == 0)
-                    {
-                        group = bannerGroups[i];
-                    }
-                    else if(group != bannerGroups[i])
-                    {
-                        Chatting.Chat.Send(player, "<color=red>The safe area of the new banner must be connected with your colony.</color>");
-
-                        BlockCallback(data);
-                        return;
-                    }
+                    BlockCallback(data);
+                    return;
                 }
             }
             
+        }
+
+        public static bool CanRemove(BlockEntities.Implementations.BannerTracker.Banner removeBanner, Colony colony)
+        {
+            if (colony.Banners.Length < 3)
+                return true;
+
+            int[] bannerGroups = new int[colony.Banners.Length];
+            int groups = 0;
+
+            for (int i = 0; i < colony.Banners.Length; i++)
+            {
+                for (int j = 0; j < colony.Banners.Length; j++)
+                {
+                    var source = colony.Banners[i];
+                    var destination = colony.Banners[j];
+
+                    if (source == destination || source == removeBanner || destination == removeBanner)
+                        continue;
+
+                    if (ConnectedSafeArea(source.Position, destination.Position))
+                    {
+                        if (bannerGroups[i] == 0 && bannerGroups[j] == 0)
+                        {
+                            groups++;
+                            bannerGroups[i] = groups;
+                            bannerGroups[j] = groups;
+                        }
+                        else if (bannerGroups[i] != 0 && bannerGroups[j] == 0)
+                        {
+                            bannerGroups[j] = bannerGroups[i];
+                        }
+                        else if (bannerGroups[j] != 0 && bannerGroups[i] == 0)
+                        {
+                            bannerGroups[i] = bannerGroups[j];
+                        }
+                        else
+                        {
+                            for (int k = 0; k < colony.Banners.Length; k++)
+                            {
+                                if (bannerGroups[k] == bannerGroups[i])
+                                    bannerGroups[k] = bannerGroups[j];
+                            }
+                        }
+                    }
+                }
+            }
+
+            int group = 0;
+            for (int i = 0; i < colony.Banners.Length; i++)
+            {
+                if (bannerGroups[i] == 0)
+                {
+                    if (colony.Banners[i] != removeBanner)
+                    {
+                        return false;
+                    }
+                }
+                else if (group == 0)
+                {
+                    group = bannerGroups[i];
+                }
+                else if (group != bannerGroups[i])
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         public static bool ConnectedSafeArea(Pipliz.Vector3Int position, Pipliz.Vector3Int source)
