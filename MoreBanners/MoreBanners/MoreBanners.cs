@@ -1,6 +1,8 @@
 ﻿using BlockTypes;
 using ModLoaderInterfaces;
+using System;
 using UnityEngine;
+using static BlockEntities.Implementations.BannerTracker;
 
 namespace MoreBanners
 {
@@ -54,6 +56,16 @@ namespace MoreBanners
                     return;
                 }
 
+                //Constrain 3: No place a banner close to another colony
+                if(CollisionWithAnotherColony(data.Position, colony.ColonyID))
+                {
+                    Chatting.Chat.Send(player, "<color=red>Too close to another colony!</color>");
+
+                    BlockCallback(data);
+                    return;
+                }
+
+
                 data.TypeNew = BuiltinBlocks.Types.banner;
                 data.RequestOrigin = new BlockChangeRequestOrigin(player, colony.ColonyID);
                 data.InventoryItemResults.Add(new InventoryItem());
@@ -98,6 +110,15 @@ namespace MoreBanners
                     return;
                 }
 
+                //New position collides with an existing colony
+                if (CollisionWithAnotherColony(data.Position, colony.ColonyID))
+                {
+                    Chatting.Chat.Send(player, "<color=red>Too close to another colony!</color>");
+
+                    BlockCallback(data);
+                    return;
+                }
+
                 data.InventoryItemResults.Add(new InventoryItem());
             }
 
@@ -110,7 +131,7 @@ namespace MoreBanners
                     return;
                 }
 
-                BlockEntities.Implementations.BannerTracker.Banner removedBanner = null;
+                Banner removedBanner = null;
                 //If It is not possible to identify the banner then ignore
                 if (!ServerManager.BlockEntityTracker.BannerTracker.TryGetClosest(data.Position, out removedBanner) || removedBanner == null)
                     return;
@@ -210,6 +231,25 @@ namespace MoreBanners
         {
             data.CallbackState = ModLoader.OnTryChangeBlockData.ECallbackState.Cancelled;
             data.InventoryItemResults.Clear();
+        }
+
+        public static bool CollisionWithAnotherColony(Vector3Int position, int colonyID)
+        {
+            Pipliz.Vector3Int found;
+            Banner foundInstance;
+
+            return ServerManager.BlockEntityTracker.BannerTracker.Positions.TryGetClosestWhere(position, BannerFromOtherColony, ref colonyID, out found, out foundInstance, ServerManager.ServerSettings.Banner.SafeRadiusMaximum *2+2);
+        }
+
+        private static bool BannerFromOtherColony(Pipliz.Vector3Int position, Banner banner, ref int colonyID)
+        {
+            if (banner == null)
+                return false;
+
+            if (banner.Colony == null)
+                return false;
+
+            return banner.Colony.ColonyID != colonyID;
         }
     }
 }
