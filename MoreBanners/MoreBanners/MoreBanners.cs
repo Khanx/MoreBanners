@@ -48,7 +48,7 @@ namespace MoreBanners
                 }
 
                 //Constrain 2: 1.000.000 Colony Points
-                if (!colony.TryTakePoints(10000000))
+                if (!colony.TryTakePoints(1000000)) //1.000.000
                 {
                     Chatting.Chat.Send(player, "<color=red>You need 1.000.000 Colony Points to place a new banner.</color>");
 
