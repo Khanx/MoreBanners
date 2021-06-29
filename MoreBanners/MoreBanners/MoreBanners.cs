@@ -18,10 +18,10 @@ namespace MoreBanners
             Players.Player player = data.RequestOrigin.AsPlayer;
 
             //Placing a NEW banner
-            if(data.TypeNew.Name.Equals(NewBannerName))
+            if (data.TypeNew.Name.Equals(NewBannerName))
             {
                 //Constrain 1: Must be inside of a colony
-                if(player.ActiveColony == null)
+                if (player.ActiveColony == null)
                 {
                     Chatting.Chat.Send(player, "<color=red>You must place the new banner inside of your colony</color>");
                     BlockCallback(data);
@@ -42,7 +42,7 @@ namespace MoreBanners
                 if (!minDistance)
                 {
                     Chatting.Chat.Send(player, "<color=red>The safe area of the new banner must be connected with your colony.</color>");
-                    
+
                     BlockCallback(data);
                     return;
                 }
@@ -57,7 +57,7 @@ namespace MoreBanners
                 }
 
                 //Constrain 3: No place a banner close to another colony
-                if(CollisionWithAnotherColony(data.Position, colony.ColonyID))
+                if (CollisionWithAnotherColony(data.Position, colony.ColonyID))
                 {
                     Chatting.Chat.Send(player, "<color=red>Too close to another colony!</color>");
 
@@ -85,7 +85,7 @@ namespace MoreBanners
                 var moveBanner = colony.GetClosestBanner(data.Position);
 
                 //Moving the banner will result in a isolatedBanner
-                if(!CanRemove(moveBanner, colony))
+                if (!CanRemove(moveBanner, colony))
                 {
                     Chatting.Chat.Send(player, "<color=red>The banner cannot be moved to the new position because it would result in a discontinuous safe zone.</ color>");
 
@@ -97,7 +97,7 @@ namespace MoreBanners
                 bool minDistance = false;
                 foreach (var banner in colony.Banners)
                 {
-                    if(banner != moveBanner)
+                    if (banner != moveBanner)
                         if (ConnectedSafeArea(banner.Position, data.Position))
                             minDistance = true;
                 }
@@ -126,21 +126,20 @@ namespace MoreBanners
             if (data.TypeOld.ItemIndex == BuiltinBlocks.Indices.banner && data.TypeNew.ItemIndex == BuiltinBlocks.Indices.air)
             {
                 //Moving the banner has already checked this conditions
-                if(data.InventoryItemResults.Count == 1)
+                if (data.InventoryItemResults.Count == 1)
                 {
                     return;
                 }
 
-                Banner removedBanner = null;
                 //If It is not possible to identify the banner then ignore
-                if (!ServerManager.BlockEntityTracker.BannerTracker.TryGetClosest(data.Position, out removedBanner) || removedBanner == null)
+                if (!ServerManager.BlockEntityTracker.BannerTracker.TryGetClosest(data.Position, out Banner removedBanner) || removedBanner == null)
                     return;
 
                 //If the colony only has less than 2 banners there is no problem
                 if (removedBanner.Colony.Banners.Length < 3)
                     return;
 
-                if(!CanRemove(removedBanner, removedBanner.Colony))
+                if (!CanRemove(removedBanner, removedBanner.Colony))
                 {
                     Chatting.Chat.Send(player, "<color=red>The banner cannot be removed because it would result in another banner disconnected from the safe zone.</color>");
 
@@ -148,7 +147,7 @@ namespace MoreBanners
                     return;
                 }
             }
-            
+
         }
 
         public static bool CanRemove(BlockEntities.Implementations.BannerTracker.Banner removeBanner, Colony colony)
@@ -235,18 +234,12 @@ namespace MoreBanners
 
         public static bool CollisionWithAnotherColony(Vector3Int position, int colonyID)
         {
-            Pipliz.Vector3Int found;
-            Banner foundInstance;
-
-            return ServerManager.BlockEntityTracker.BannerTracker.Positions.TryGetClosestWhere(position, BannerFromOtherColony, ref colonyID, out found, out foundInstance, ServerManager.ServerSettings.Banner.SafeRadiusMaximum *2+2);
+            return ServerManager.BlockEntityTracker.BannerTracker.Positions.TryGetClosestWhere(position, BannerFromOtherColony, ref colonyID, out Pipliz.Vector3Int found, out Banner foundInstance, ServerManager.ServerSettings.Banner.SafeRadiusMaximum * 2 + 2);
         }
 
         private static bool BannerFromOtherColony(Pipliz.Vector3Int position, Banner banner, ref int colonyID)
         {
-            if (banner == null)
-                return false;
-
-            if (banner.Colony == null)
+            if (banner == null || banner.Colony == null)
                 return false;
 
             return banner.Colony.ColonyID != colonyID;
