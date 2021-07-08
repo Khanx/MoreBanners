@@ -32,19 +32,22 @@ namespace MoreBanners
                 Colony colony = player.ActiveColony;
 
                 //Constrain 2: Distance to closer banner must be small than safe radius * 2
-                bool minDistance = false;
-                foreach (var banner in colony.Banners)
+                if (!PermissionsManager.HasPermission(player, "khanx.placebanner")) //Permission to ignore the distance
                 {
-                    if (ConnectedSafeArea(banner.Position, data.Position))
-                        minDistance = true;
-                }
+                    bool minDistance = false;
+                    foreach (var banner in colony.Banners)
+                    {
+                        if (ConnectedSafeArea(banner.Position, data.Position))
+                            minDistance = true;
+                    }
 
-                if (!minDistance)
-                {
-                    Chatting.Chat.Send(player, "<color=red>The safe area of the new banner must be connected with your colony.</color>");
+                    if (!minDistance)
+                    {
+                        Chatting.Chat.Send(player, "<color=red>The safe area of the new banner must be connected with your colony.</color>");
 
-                    BlockCallback(data);
-                    return;
+                        BlockCallback(data);
+                        return;
+                    }
                 }
 
                 //Constrain 2: 1.000.000 Colony Points
@@ -85,29 +88,32 @@ namespace MoreBanners
                 var moveBanner = colony.GetClosestBanner(data.Position);
 
                 //Moving the banner will result in a isolatedBanner
-                if (!CanRemove(moveBanner, colony))
+                if (!PermissionsManager.HasPermission(player, "khanx.placebanner")) //Permission to ignore the distance
                 {
-                    Chatting.Chat.Send(player, "<color=red>The banner cannot be moved to the new position because it would result in a discontinuous safe zone.</ color>");
+                    if (!CanRemove(moveBanner, colony))
+                    {
+                        Chatting.Chat.Send(player, "<color=red>The banner cannot be moved to the new position because it would result in a discontinuous safe zone.</ color>");
 
-                    BlockCallback(data);
-                    return;
-                }
+                        BlockCallback(data);
+                        return;
+                    }
 
-                //The new position to place the banner must be connected with the safe area
-                bool minDistance = false;
-                foreach (var banner in colony.Banners)
-                {
-                    if (banner != moveBanner)
-                        if (ConnectedSafeArea(banner.Position, data.Position))
-                            minDistance = true;
-                }
+                    //The new position to place the banner must be connected with the safe area
+                    bool minDistance = false;
+                    foreach (var banner in colony.Banners)
+                    {
+                        if (banner != moveBanner)
+                            if (ConnectedSafeArea(banner.Position, data.Position))
+                                minDistance = true;
+                    }
 
-                if (!minDistance)
-                {
-                    Chatting.Chat.Send(player, "<color=red>The banner cannot be moved to the new position because it would result in another banner disconnected from the safe zone.</ color>");
+                    if (!minDistance)
+                    {
+                        Chatting.Chat.Send(player, "<color=red>The banner cannot be moved to the new position because it would result in another banner disconnected from the safe zone.</ color>");
 
-                    BlockCallback(data);
-                    return;
+                        BlockCallback(data);
+                        return;
+                    }
                 }
 
                 //New position collides with an existing colony
@@ -139,18 +145,21 @@ namespace MoreBanners
                 if (removedBanner.Colony.Banners.Length < 3)
                     return;
 
-                if (!CanRemove(removedBanner, removedBanner.Colony))
+                if (!PermissionsManager.HasPermission(player, "khanx.placebanner")) //Permission to ignore the distance
                 {
-                    Chatting.Chat.Send(player, "<color=red>The banner cannot be removed because it would result in another banner disconnected from the safe zone.</color>");
+                    if (!CanRemove(removedBanner, removedBanner.Colony))
+                    {
+                        Chatting.Chat.Send(player, "<color=red>The banner cannot be removed because it would result in another banner disconnected from the safe zone.</color>");
 
-                    BlockCallback(data);
-                    return;
+                        BlockCallback(data);
+                        return;
+                    }
                 }
             }
 
         }
 
-        public static bool CanRemove(BlockEntities.Implementations.BannerTracker.Banner removeBanner, Colony colony)
+        public static bool CanRemove(Banner removeBanner, Colony colony)
         {
             if (colony.Banners.Length < 3)
                 return true;
