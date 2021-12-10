@@ -35,8 +35,9 @@ namespace MoreBanners
                 if (!PermissionsManager.HasPermission(player, "khanx.placebanner")) //Permission to ignore the distance
                 {
                     bool minDistance = false;
-                    foreach (var banner in colony.Banners)
+                    for (int i = 0; i < colony.Banners.Count; i++)
                     {
+                        Banner banner = colony.Banners[i];
                         if (ConnectedSafeArea(banner.Position, data.Position))
                             minDistance = true;
                     }
@@ -59,15 +60,31 @@ namespace MoreBanners
                     return;
                 }
 
-                //Constrain 3: 1.000.000 Colony Points
-                if (!colony.TryTakePoints(1000000)) //1.000.000
+                int maxCost = 1000000;
+
+
+                //Constrain 3: The colony has unlocked the last banner safe expansion
+                if (ServerManager.UpgradeManager.TryGetKeyUpgrade("pipliz.safezone", out var key, out var rawUpgrade) && rawUpgrade is Assets.ColonyPointUpgrades.Implementations.SafeZoneUpgrade safeZone)
                 {
-                    Chatting.Chat.Send(player, "<color=red>You need 1.000.000 Colony Points to place a new banner.</color>");
+                    if (colony.UpgradeState.GetUnlockedLevels(key) != safeZone.LevelCount)
+                    {
+                        Chatting.Chat.Send(player, string.Format("<color=red>Before placing a new banner, you need to fully upgrade the safe area of your banner.</color>", maxCost));
+
+                        BlockCallback(data);
+                        return;
+                    }
+
+                    maxCost = (int)safeZone.Levels[safeZone.Levels.Length - 1].cost;
+                }
+
+                //Constrain 4: The player has to expend the same amount of Colony Points that cost the last upgrade of the banner safe
+                if (!colony.TryTakePoints(maxCost)) //1.000.000
+                {
+                    Chatting.Chat.Send(player, string.Format("<color=red>You need {0:#,0} Colony Points to place a new banner.</color>", maxCost));
 
                     BlockCallback(data);
                     return;
                 }
-
 
                 data.TypeNew = BuiltinBlocks.Types.banner;
                 data.RequestOrigin = new BlockChangeRequestOrigin(player, colony.ColonyID);
@@ -78,7 +95,7 @@ namespace MoreBanners
             if (data.TypeNew.ItemIndex == BuiltinBlocks.Indices.banner)
             {
                 //Player is placing a NEW colony or the colony only has one banner
-                if (player.ActiveColony == null || player.ActiveColony.Banners.Length == 1 || data.InventoryItemResults.Count == 1)
+                if (player.ActiveColony == null || player.ActiveColony.Banners.Count == 1 || data.InventoryItemResults.Count == 1)
                 {
                     return;
                 }
@@ -100,8 +117,10 @@ namespace MoreBanners
 
                     //The new position to place the banner must be connected with the safe area
                     bool minDistance = false;
-                    foreach (var banner in colony.Banners)
+                    for(int i =0;i< colony.Banners.Count;i++)
                     {
+                        var banner = colony.Banners[i];
+
                         if (banner != moveBanner)
                             if (ConnectedSafeArea(banner.Position, data.Position))
                                 minDistance = true;
@@ -142,7 +161,7 @@ namespace MoreBanners
                     return;
 
                 //If the colony only has less than 2 banners there is no problem
-                if (removedBanner.Colony.Banners.Length < 3)
+                if (removedBanner.Colony.Banners.Count < 3)
                     return;
 
                 if (!PermissionsManager.HasPermission(player, "khanx.placebanner")) //Permission to ignore the distance
@@ -161,15 +180,15 @@ namespace MoreBanners
 
         public static bool CanRemove(Banner removeBanner, Colony colony)
         {
-            if (colony.Banners.Length < 3)
+            if (colony.Banners.Count < 3)
                 return true;
 
-            int[] bannerGroups = new int[colony.Banners.Length];
+            int[] bannerGroups = new int[colony.Banners.Count];
             int groups = 0;
 
-            for (int i = 0; i < colony.Banners.Length; i++)
+            for (int i = 0; i < colony.Banners.Count; i++)
             {
-                for (int j = 0; j < colony.Banners.Length; j++)
+                for (int j = 0; j < colony.Banners.Count; j++)
                 {
                     var source = colony.Banners[i];
                     var destination = colony.Banners[j];
@@ -195,7 +214,7 @@ namespace MoreBanners
                         }
                         else
                         {
-                            for (int k = 0; k < colony.Banners.Length; k++)
+                            for (int k = 0; k < colony.Banners.Count; k++)
                             {
                                 if (bannerGroups[k] == bannerGroups[i])
                                     bannerGroups[k] = bannerGroups[j];
@@ -206,7 +225,7 @@ namespace MoreBanners
             }
 
             int group = 0;
-            for (int i = 0; i < colony.Banners.Length; i++)
+            for (int i = 0; i < colony.Banners.Count; i++)
             {
                 if (bannerGroups[i] == 0)
                 {
